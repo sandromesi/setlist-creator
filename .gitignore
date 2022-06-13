@@ -5,6 +5,9 @@
 /backup
 /zero_to_hero
 main.py
+test sample.txt
+
+*.csv
 
 ### dotenv ###
 .env

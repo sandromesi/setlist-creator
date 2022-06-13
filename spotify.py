@@ -3,17 +3,24 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import pandas as pd
 import csv
 from pathlib import Path
-from datetime import datetime
+import datetime
+import json
 
 cid = 'a6e40993b6c44179a59a4274e8f07852' #Client ID
 secret = 'cfc0eb19c5aa4737bb73fee57a8248e7' #Client Secret
 downloads_path = str(Path.home() / "Downloads")
-
 dream_theater = 'https://open.spotify.com/artist/2aaLAng2L2aWD2FClzwiep?si=5YAksQJARP-LBCaAzswR3A'
+
+artist_list = ['Dream Theater', 'Avenged Sevenfold', 'TOOL', 'System Of A Down', 'Slipknot', 'Bring Me The Horizon']
+country = 'IE'
 
 #Authentication - without user
 client_credentials_manager = SpotifyClientCredentials(client_id=cid, client_secret=secret)
 sp = spotipy.Spotify(client_credentials_manager = client_credentials_manager)
+
+def string_to_list(query):
+    artist_list = query.splitlines()
+    return artist_list
 
 def search_artist(query):
     resp = sp.search(q=query, limit=1 ,type='artist')
@@ -24,8 +31,8 @@ def get_artist_stats(uri):
     artist = sp.artist(uri)
     return artist
 
-def get_top10_tracks(uri):
-    top10_tracks = sp.artist_top_tracks(artist_id=uri, country='IE')
+def get_top10_tracks(uri, country):
+    top10_tracks = sp.artist_top_tracks(artist_id=uri, country=country)
     return top10_tracks
 
 def create_csv_name(artist):
@@ -33,8 +40,142 @@ def create_csv_name(artist):
     return csv_name
 
 def ms_to_duration(ms):
-    duration = datetime.fromtimestamp(ms/1000.0).strftime('%H:%M:%S')
+    duration = datetime.datetime.fromtimestamp(ms/1000.0).strftime('%H:%M:%S')
     return duration
+
+def str_to_timedelta(str):
+    time = datetime.timedelta(hours=float(str[:2]), 
+    minutes=float(str[3:5]), seconds=float(str[6:8]))
+    return time
+
+def artists_to_dataframe(artist_list):
+
+    id_list = []
+    name_list = []
+    followers_list = []
+    popularity_list = []
+    uri_list = []
+
+    for query in artist_list:
+        uri = search_artist(query)
+        artist = get_artist_stats(uri)
+
+        id = artist['id']
+        name = artist['name']
+        followers = int(artist['followers']['total'])
+        popularity = int(artist['popularity'])
+        uri = artist['uri']
+
+        id_list.append(id)
+        name_list.append(name)
+        followers_list.append(followers)
+        popularity_list.append(popularity)
+        uri_list.append(uri)
+
+    df = pd.DataFrame({
+    'id' : id_list,
+    'name' : name_list,
+    'followers' : followers_list,
+    'popularity' : popularity_list,
+    'uri' : uri_list})
+
+    return df
+
+def top10_tracks_to_dataframe(artist_list):
+
+    global country
+
+    track_list = pd.DataFrame()
+
+    for query in artist_list:
+
+        uri = search_artist(query)
+        top10_tracks = get_top10_tracks(uri, country)
+
+        id_list = []
+        name_list = []
+        popularity_list = []
+        duration_list = []
+        artists_list = []
+        country_list = []
+        artist_id_list = []
+        release_date_list = []
+        album_list = []
+        uri_list = []
+
+        for i in range(len(top10_tracks['tracks'])):
+
+            id = top10_tracks['tracks'][i]['id']
+            name = top10_tracks['tracks'][i]['name']
+            popularity = int(top10_tracks['tracks'][i]['popularity'])
+            duration = int(top10_tracks['tracks'][i]['duration_ms'])
+            duration = ms_to_duration(duration)
+            artist = top10_tracks['tracks'][i]['artists'][0]['name']
+            artist_id = top10_tracks['tracks'][i]['artists'][0]['id']
+            release_date = top10_tracks['tracks'][i]['album']['release_date']
+            album = top10_tracks['tracks'][i]['album']['name']
+            uri = top10_tracks['tracks'][i]['uri']
+
+            id_list.append(id)
+            name_list.append(name)
+            popularity_list.append(popularity)
+            duration_list.append(duration)
+            artists_list.append(artist)
+            country_list.append(country)
+            artist_id_list.append(artist_id)
+            release_date_list.append(release_date)
+            album_list.append(album)
+            uri_list.append(uri)
+
+        df_tracks = pd.DataFrame({
+        'id' : id_list,
+        'name' : name_list,
+        'popularity' : popularity_list,
+        'duration' : duration_list,
+        'artist' : artists_list,
+        'country' : country_list,
+        'artist_id' : artist_id_list,
+        'release_date' : release_date_list,
+        'album' : album_list,
+        'uri' : uri_list})
+
+        track_list = pd.concat([track_list, df_tracks], ignore_index=True)
+
+    setlist = track_list.sort_values(by='popularity', ascending=False, ignore_index=True)
+
+    return setlist
+""" 
+def get_total_setlist(artist_list, country):
+    
+    track_list = pd.DataFrame()
+
+    for artist in artist_list:
+        uri = search_artist(artist)
+        top10_tracks = get_top10_tracks(uri, country)
+        df_tracks = top10_tracks_to_dataframe(top10_tracks, country)
+        track_list = pd.concat([track_list, df_tracks], ignore_index=True)
+
+    setlist = track_list.sort_values(by='popularity', ascending=False, ignore_index=True)
+
+    return setlist
+ """
+def calculate_setlist(setlist, setlist_duration):
+    
+    global total_setlist_duration
+
+    for i in range(len(setlist)):
+        if total_setlist_duration + str_to_timedelta(setlist['duration'].loc[setlist.index[i]]) > setlist_duration:
+            return i
+        total_setlist_duration += str_to_timedelta(setlist['duration'].loc[setlist.index[i]])
+
+def calculate_total_duration(setlist, setlist_duration):
+    
+    global total_setlist_duration
+
+    for i in range(len(setlist)):
+        if total_setlist_duration + str_to_timedelta(setlist['duration'].loc[setlist.index[i]]) > setlist_duration:
+            return str(total_setlist_duration)
+        total_setlist_duration += str_to_timedelta(setlist['duration'].loc[setlist.index[i]])
 
 def create_artist_csv(artist, csv_name):
 
@@ -67,40 +208,55 @@ def create_artist_csv(artist, csv_name):
 
     return data
 
-def create_top10_tracks_csv(top10_tracks, csv_name):
+def create_top10_tracks_csv(tracks, csv_name):
 
-    tracks = []
-
-    fieldnames = ['id', 'name', 'popularity', 'duration', 
-                'artist_id', 'release_date', 'album', 'uri']
-
-    for i in range(len(top10_tracks['tracks'])):
-
-        id = top10_tracks['tracks'][i]['id']
-        name = top10_tracks['tracks'][i]['name']
-        popularity = int(top10_tracks['tracks'][i]['popularity'])
-        duration = int(top10_tracks['tracks'][i]['duration_ms'])
-        duration = ms_to_duration(duration)
-        artist_id = top10_tracks['tracks'][i]['artists'][0]['id']
-        release_date = top10_tracks['tracks'][i]['album']['release_date']
-        album = top10_tracks['tracks'][i]['album']['name']
-        uri = top10_tracks['tracks'][i]['uri']
-
-        data = dict(
-        id = id,
-        name = name,
-        popularity = popularity,
-        duration = duration,
-        artist_id = artist_id,
-        release_date = release_date,
-        album = album,
-        uri = uri)
-
-        tracks.append(data)
+    fieldnames = ['id', 'name', 'popularity', 'duration', 'artist'
+                'country', 'artist_id', 'release_date', 'album', 'uri']
 
     with open(f'{downloads_path}\{csv_name} Top10 Tracks.csv', 'w', newline='') as csvfile:
             csv.DictWriter(csvfile, fieldnames=fieldnames).writeheader()           
             for track in tracks:
                 csv.writer(csvfile).writerow(list(track.values()))
 
-    return data
+setlist_duration = str_to_timedelta('02:00:00')
+total_setlist_duration = str_to_timedelta('00:00:00')
+
+if __name__ == '__main__':
+
+    #total_setlist = get_total_setlist(artist_list, country)
+    
+    #
+    #print(final_setlist.to_string())
+    #total_setlist.to_csv('setlist.csv')
+    #final_setlist.to_csv('final_setlist.csv')
+    
+    #artists = artists_to_dataframe(artist_list)
+    #artists.to_csv('artists.csv')
+
+    total_setlist = pd.read_csv('setlist.csv')
+    artists = pd.read_csv('artists.csv')
+    df_index = calculate_setlist(total_setlist, setlist_duration)
+    final_setlist = total_setlist.head(df_index + 1)    
+    
+    print(total_setlist.artist.unique().tolist())
+    #print(artists['name'].tolist())
+    #print(artists['followers'].tolist())
+    #print((final_setlist).to_string())
+    #print(df_index)
+    #print(total_setlist)
+
+    #print((final_setlist.artist == 'System Of A Down').sum())
+    #print((final_setlist.artist == 'TOOL').sum())
+
+
+
+    """ df_index = calculate_setlist(total_setlist, setlist_duration)
+    total_duration = calculate_total_duration(total_setlist, setlist_duration)
+
+    print(df_index)
+    print(total_duration) """
+        
+
+
+
+

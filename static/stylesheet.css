@@ -1,0 +1,20 @@
+html,
+body {
+  height: 100%;
+}
+
+.form-floating:focus-within {
+    z-index: 2;
+  }
+
+.message {
+    font-style: italic;
+    text-decoration: underline;
+    color: red;
+    text-align: center;
+}
+
+
+
+
+

@@ -3,11 +3,11 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 import spotify
 import pandas as pd
-from pathlib import Path
+#from pathlib import Path
 import os
 from dotenv import load_dotenv
 load_dotenv()
-downloads_path = str(Path.home() / "Downloads")
+#downloads_path = str(Path.home() / "Downloads")
 
 app = Flask(__name__)
 
@@ -142,9 +142,9 @@ def submit():
         setlist_artists = setlist.artist.unique().tolist()
         setlist_artists_tracks_count = []
 
-        artists_dataframe.to_csv(path_or_buf=downloads_path + '/artists_stats.csv')
-        total_setlist.to_csv(path_or_buf=downloads_path + '/total_track_list.csv')
-        setlist.to_csv(path_or_buf=downloads_path + '/setlist.csv')
+        #artists_dataframe.to_csv(path_or_buf=downloads_path + '/artists_stats.csv')
+        #total_setlist.to_csv(path_or_buf=downloads_path + '/total_track_list.csv')
+        #setlist.to_csv(path_or_buf=downloads_path + '/setlist.csv')
 
         for artist in setlist_artists:
             setlist_artists_tracks_count.append(int((setlist.artist == artist).sum()))

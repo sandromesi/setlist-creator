@@ -81,6 +81,29 @@ def artists_to_dataframe(artist_list):
 
     return df
 
+def sql_artist_to_dataframe(sql_artist):
+
+    id_list = []
+    name_list = []
+    followers_list = []
+    popularity_list = []
+    uri_list = []
+
+    id_list.append(sql_artist.id)
+    name_list.append(sql_artist.name)
+    followers_list.append(sql_artist.followers)
+    popularity_list.append(sql_artist.popularity)
+    uri_list.append(sql_artist.uri)
+
+    df = pd.DataFrame({
+    'id' : id_list,
+    'name' : name_list,
+    'followers' : followers_list,
+    'popularity' : popularity_list,
+    'uri' : uri_list})
+
+    return df
+
 def top10_tracks_to_dataframe(artist_list):
 
     global country
@@ -144,6 +167,58 @@ def top10_tracks_to_dataframe(artist_list):
     setlist = track_list.sort_values(by='popularity', ascending=False, ignore_index=True)
 
     return setlist
+
+def sql_top10_tracks_to_dataframe(sql_tracks):
+
+    track_list = pd.DataFrame()
+
+    id_list = []
+    name_list = []
+    popularity_list = []
+    duration_list = []
+    artist_list = []
+    release_date_list = []
+    album_list = []
+    uri_list = []
+
+    for i in range(len(sql_tracks)):
+
+        id = sql_tracks[i].id
+        name = sql_tracks[i].name
+        popularity = int(sql_tracks[i].popularity)
+        duration = int(sql_tracks[i].duration)
+        duration = ms_to_duration(duration)
+        artist = sql_tracks[i].artist
+        release_date = sql_tracks[i].release_date
+        album = sql_tracks[i].album
+        uri = sql_tracks[i].uri
+
+        id_list.append(id)
+        name_list.append(name)
+        popularity_list.append(popularity)
+        duration_list.append(duration)
+        artist_list.append(artist)
+        release_date_list.append(release_date)
+        album_list.append(album)
+        uri_list.append(uri)
+
+    df_tracks = pd.DataFrame({
+    'id' : id_list,
+    'name' : name_list,
+    'popularity' : popularity_list,
+    'duration' : duration_list,
+    'artist' : artist_list,
+    'release_date' : release_date_list,
+    'album' : album_list,
+    'uri' : uri_list})
+
+    track_list = pd.concat([track_list, df_tracks], ignore_index=True)
+
+    setlist = track_list.sort_values(by='popularity', ascending=False, ignore_index=True)
+
+    return setlist
+
+
 """ 
 def get_total_setlist(artist_list, country):
     
@@ -233,12 +308,13 @@ if __name__ == '__main__':
     #artists = artists_to_dataframe(artist_list)
     #artists.to_csv('artists.csv')
 
-    total_setlist = pd.read_csv('setlist.csv')
+    """ total_setlist = pd.read_csv('setlist.csv')
     artists = pd.read_csv('artists.csv')
     df_index = calculate_setlist(total_setlist, setlist_duration)
     final_setlist = total_setlist.head(df_index + 1)    
     
-    print(total_setlist.artist.unique().tolist())
+    print(total_setlist.artist.unique().tolist()) """
+
     #print(artists['name'].tolist())
     #print(artists['followers'].tolist())
     #print((final_setlist).to_string())
@@ -247,6 +323,11 @@ if __name__ == '__main__':
 
     #print((final_setlist.artist == 'System Of A Down').sum())
     #print((final_setlist.artist == 'TOOL').sum())
+
+    uri = 'spotify:artist:2aaLAng2L2aWD2FClzwiep'
+    #artist = get_artist_stats(uri)
+    tracks = get_top10_tracks(uri, country)
+    print(tracks)
 
 
 

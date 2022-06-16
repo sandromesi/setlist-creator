@@ -4,11 +4,11 @@ import pandas as pd
 import csv
 from pathlib import Path
 import datetime
-import json
+import os
 
-cid = 'a6e40993b6c44179a59a4274e8f07852' #Client ID
-secret = 'cfc0eb19c5aa4737bb73fee57a8248e7' #Client Secret
-downloads_path = str(Path.home() / "Downloads")
+cid = os.getenv('CLIENT_ID')
+secret = os.getenv('CLIENT_SECRET')
+#downloads_path = str(Path.home() / "Downloads")
 dream_theater = 'https://open.spotify.com/artist/2aaLAng2L2aWD2FClzwiep?si=5YAksQJARP-LBCaAzswR3A'
 
 artist_list = ['Dream Theater', 'Avenged Sevenfold', 'TOOL', 'System Of A Down', 'Slipknot', 'Bring Me The Horizon']

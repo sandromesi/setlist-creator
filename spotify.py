@@ -235,13 +235,17 @@ def get_total_setlist(artist_list, country):
     return setlist
  """
 def calculate_setlist(setlist, setlist_duration):
-    
+
     global total_setlist_duration
+    temp_total_setlist_duration = str_to_timedelta('00:00:00')
+    df_index = 0
 
     for i in range(len(setlist)):
-        if total_setlist_duration + str_to_timedelta(setlist['duration'].loc[setlist.index[i]]) > setlist_duration:
-            return i
-        total_setlist_duration += str_to_timedelta(setlist['duration'].loc[setlist.index[i]])
+        if temp_total_setlist_duration + str_to_timedelta(setlist['duration'].loc[setlist.index[i]]) < setlist_duration:
+            temp_total_setlist_duration += str_to_timedelta(setlist['duration'].loc[setlist.index[i]])
+            df_index = df_index + 1
+            total_setlist_duration = temp_total_setlist_duration                
+    return df_index
 
 def calculate_total_duration(setlist, setlist_duration):
     
@@ -251,6 +255,7 @@ def calculate_total_duration(setlist, setlist_duration):
         if total_setlist_duration + str_to_timedelta(setlist['duration'].loc[setlist.index[i]]) > setlist_duration:
             return str(total_setlist_duration)
         total_setlist_duration += str_to_timedelta(setlist['duration'].loc[setlist.index[i]])
+    return total_setlist_duration
 
 def create_artist_csv(artist, csv_name):
 
@@ -276,22 +281,6 @@ def create_artist_csv(artist, csv_name):
 
     data['uri'] = artist['uri']
     fieldnames.append('uri')
-
-    with open(f'{downloads_path}\{csv_name} Stats.csv', 'w', newline='') as csvfile:
-            csv.DictWriter(csvfile, fieldnames=fieldnames).writeheader()             
-            csv.writer(csvfile).writerow(list(data.values()))
-
-    return data
-
-def create_top10_tracks_csv(tracks, csv_name):
-
-    fieldnames = ['id', 'name', 'popularity', 'duration', 'artist'
-                'country', 'artist_id', 'release_date', 'album', 'uri']
-
-    with open(f'{downloads_path}\{csv_name} Top10 Tracks.csv', 'w', newline='') as csvfile:
-            csv.DictWriter(csvfile, fieldnames=fieldnames).writeheader()           
-            for track in tracks:
-                csv.writer(csvfile).writerow(list(track.values()))
 
 setlist_duration = str_to_timedelta('02:00:00')
 total_setlist_duration = str_to_timedelta('00:00:00')

@@ -1,0 +1,46 @@
+<div class="container">
+    <div class="row le-hide">
+        <div class="col align-center">
+            <div class="m-0 row p-3">
+                <div class="col-4">
+                    <strong>ARTIST</strong>
+                </div>
+                <div class="col-6">
+                    <strong>SONG</strong>
+                </div>
+                <div class="col-2">
+                    <strong>DURATION</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%for i in range(0, len)%}
+    <div class="row" id=text-table>
+        <div class="col-sm-4 col-lg-12 mt-2 mb-2">
+            <div class="m-0 row row-container bg-white p-3">
+                <div class="col-4">
+                    {{artist_data[i]}}
+                </div>
+                <div class="col-6">
+                    {{song_data[i]}}
+                </div>
+                <div class="col-2">
+                    <span class="mr-5">{{track_durations[i]}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {%endfor%}
+    <div class="row" id=text-table>
+        <div class="col-sm-4 col-lg-12 mt-2 mb-2">
+            <div class="m-0 row row-container bg-white p-3">
+                <div class="col-10">
+                    TOTAL DURATION  : 
+                </div>
+                <div class="col-2">
+                    <span class="mr-5">{{total_duration}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

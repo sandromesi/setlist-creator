@@ -1,12 +1,28 @@
 {% extends 'base.html' %}
 {% block content %}
+
+{% if fill_message %}
+<div class="alert alert-danger alert-dismissible show" role="alert">{{ fill_message | safe }}
+    <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:">
+        <use xlink:href="#exclamation-triangle-fill" />
+    </svg>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+{% if not_found_message %}
+<div class="alert alert-danger alert-dismissible show" role="alert">{{ not_found_message }}
+    <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:">
+        <use xlink:href="#exclamation-triangle-fill" />
+    </svg>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
 <div class="card col-md-6 text-left mx-auto bg-light">
     <div class="card-body mt-2">
         <h4 class="card-title bg-info text-white btn-lg text-center btn-block align-center pt-3 pb-3">
             Gig Setlist Creator</h4>
-        {% if message %}
-        <p class="message">{{ message | safe }}</p>
-        {% endif %}
         <form class="form" action="/submit" method="POST">
             <div class="form-group mt-3">
                 <h5>Search for artists: </h5>
@@ -24,7 +40,7 @@
                 <option value="04:00:00">4 hour</option>
             </select>
             <div class="d-grid gap-2 col-6 mx-auto mt-3">
-                <input type="submit" value="Submit" class="btn bg-info">
+                <input type="submit" value="Submit" class="btn bg-info text-white">
             </div>
         </form>
     </div>

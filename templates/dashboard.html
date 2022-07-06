@@ -4,24 +4,14 @@
     <div class="col-6">
         <div class="card card-style mb-2">
             <div class="card-body">
-                <h3 class="text-secondary">Setlist Duration</h2>
-                    <h1>{{duration}}</h1>
-            </div>
-        </div>
-        <div class="card card-style mb-2">
-            <div class="card-body">
-                <div class="chart-container" style="position: relative;">
-                    <canvas id="artists_vs_tracks"></canvas>
-                </div>
+                {% include 'table.html' %}
             </div>
         </div>
     </div>
     <div class="col-6">
         <div class="card card-style mb-2">
-            <div class="card-body">
-                <div class="chart-container" style="position: relative;">
-                    <canvas id="artist_followers" height="210"></canvas>
-                </div>
+            <div class="chart-container" style="position: relative;">
+                <canvas id="artist_followers" height="210"></canvas>
             </div>
         </div>
     </div>
@@ -36,45 +26,6 @@
         }
     })
 
-    let artists_tracks = JSON.parse('{{ artists_tracks | tojson }}')
-    let tracks_count = JSON.parse('{{ tracks_count  | tojson }}')
-
-    let artists_vs_tracks_chart = new Chart(artists_vs_tracks, {
-        type: 'pie',
-        data: {
-            labels: artists_tracks, /* ['System Of A Down', 'Bring Me The Horizon', 'Slipknot',
-                'Machine Gun Kelly', 'Avenged Sevenfold', 'TOOL'], */
-            datasets: [{
-                label: 'Tracks Per Artist',
-                data: tracks_count, /* [6, 5, 8, 1, 5, 3], */
-                backgroundColor: ['#5DA5DA', '#FAA43A', '#60BD68',
-                    '#B276B2', '#E16851', '#FB8267'],
-                borderWidth: 1,
-                hoverBorderColor: 'black',
-                hoverBorderWidth: 2,
-                hoverBackgroundColor: 'rgba(154, 245, 140)',
-                pointHoverRadius: 5
-            }],
-        },
-        options: {
-            title: {
-                display: true,
-                text: 'Tracks Per Artist',
-                fontSize: 20
-            },
-            legend: {
-                position: 'right',
-                labels: {
-                    fontColor: 'gray'
-                },
-                display: true
-            },
-            elements: {
-                hitRadius: 3
-            }
-        }
-    })
-
     let names = JSON.parse('{{ names | tojson }}')
     let followers = JSON.parse('{{ followers  | tojson }}')
 
@@ -84,7 +35,7 @@
             labels: names, /* ['System Of A Down', 'Bring Me The Horizon', 'Slipknot',
                 'Machine Gun Kelly', 'Avenged Sevenfold', 'TOOL'], */
             datasets: [{
-                label: "Artists' Followers",
+                label: "Artist followers",
                 data: followers, /* [8250646, 4431998, 8468330, 4431998, 5396802, 2676659], */
                 backgroundColor: ['#5DA5DA ', '#FAA43A', '#60BD68',
                     '#B276B2', '#E16851', '#FB8267'],
@@ -98,7 +49,7 @@
         options: {
             title: {
                 display: true,
-                text: "Artists' Followers",
+                text: "Artist followers",
                 fontSize: 20,
             },
             legend: {

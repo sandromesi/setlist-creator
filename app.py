@@ -1,13 +1,12 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 import spotify
 import pandas as pd
-#from pathlib import Path
 import os
+
 from dotenv import load_dotenv
 load_dotenv()
-#downloads_path = str(Path.home() / "Downloads")
 
 app = Flask(__name__)
 
@@ -78,7 +77,7 @@ class Genre(db.Model):
 @app.route('/')
 def index():
     return render_template('index.html')
-
+        
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
@@ -89,14 +88,22 @@ def submit():
     if request.method == 'POST':
         query = request.form['artists-query']
         setlist_duration = request.form['setlist-duration']
+
+        if query == '' or setlist_duration == '':
+            return render_template('index.html', fill_message='Please, artist name and setlist duration is required!')
+
         setlist_duration = spotify.str_to_timedelta(setlist_duration)
         artist_list = spotify.string_to_list(query)
 
         for artist in artist_list:
             if db.session.query(Artist).filter(func.lower(Artist.name) == func.lower(artist)).count() == 0:
-                uri = spotify.search_artist(artist)
-                artist_stats = spotify.get_artist_stats(uri)
-                name = artist_stats['name']
+                try:
+                    uri = spotify.search_artist(artist)
+                    artist_stats = spotify.get_artist_stats(uri)      
+                    name = artist_stats['name']
+                except:
+                    return render_template('index.html', not_found_message=f'Sorry! {artist} not found!')
+
                 followers = int(artist_stats['followers']['total'])
                 popularity = int(artist_stats['popularity'])
                 uri = artist_stats['uri']           
@@ -117,15 +124,21 @@ def submit():
                     uri = top10_tracks['tracks'][i]['uri']
                     track_data = Track(name, popularity, duration, artist, release_date, album, uri)
                     db.session.add(track_data)
-
-                db.session.commit()
+                try:
+                    db.session.commit()
+                except:
+                    pass
 
             artists_dataframe = pd.DataFrame()
             total_setlist = pd.DataFrame()
 
         for artist in artist_list:
-            sql_artist = db.session.query(Artist).filter(func.lower(Artist.name) == func.lower(artist)).first()
-            artist_df = spotify.sql_artist_to_dataframe(sql_artist)
+            try:
+                sql_artist = db.session.query(Artist).filter(func.lower(Artist.name) == func.lower(artist)).first()
+                artist_df = spotify.sql_artist_to_dataframe(sql_artist)
+            except:
+                return render_template('index.html', not_found_message=f'Sorry! {artist} not found!')
+                     
             artists_dataframe = pd.concat([artists_dataframe, artist_df], ignore_index=True)
             sql_tracks = db.session.query(Track).filter(func.lower(Track.artist) == func.lower(artist)).all()           
             tracks_df = spotify.sql_top10_tracks_to_dataframe(sql_tracks)
@@ -138,7 +151,9 @@ def submit():
 
         df_index = spotify.calculate_setlist(total_setlist, setlist_duration)
         total_duration = spotify.calculate_total_duration(total_setlist, setlist_duration)
-        setlist = total_setlist.head(df_index + 1) 
+        
+        setlist = total_setlist.head(df_index + 1)
+
         setlist_artists = setlist.artist.unique().tolist()
         setlist_artists_tracks_count = []
 
@@ -146,21 +161,27 @@ def submit():
         #total_setlist.to_csv(path_or_buf=downloads_path + '/total_track_list.csv')
         #setlist.to_csv(path_or_buf=downloads_path + '/setlist.csv')
 
+
         for artist in setlist_artists:
             setlist_artists_tracks_count.append(int((setlist.artist == artist).sum()))
 
         names = artists_dataframe['name'].tolist()
         followers = artists_dataframe['followers'].tolist()
-        
-        if query == '' or setlist_duration == '':
-            return render_template('index.html', message='Please, artist name is required')
+
+        artist_data = setlist['artist'].tolist()
+        song_data = setlist['name'].tolist()
+        track_durations = setlist['duration'].tolist()
+
         return render_template('dashboard.html', 
-        duration=total_duration,
-        artists_tracks=setlist_artists,
-        tracks_count=setlist_artists_tracks_count,
+        total_duration=total_duration,
         names=names,
-        followers=followers
-        )
+        artists_tracks=setlist_artists,
+        followers=followers,
+        tracks_count=setlist_artists_tracks_count,
+        artist_data=artist_data,
+        song_data=song_data,
+        track_durations=track_durations,
+        len=len(track_durations))
 
 if __name__ == '__main__':
     app.run()
